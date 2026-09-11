@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Ruleta de la Osteoporosis</title>
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .ruleta-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #ffffff;
+            border: 1px solid #e1e1e1;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .header-game {
+            background-color: #003865;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .wheel-box {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin: 20px auto;
+        }
+        #canvasWheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            transition: transform 4s cubic-bezier(0.15, 0.99, 0.18, 1);
+        }
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #ef6c00;
+            z-index: 10;
+        }
+        .btn-spin {
+            background-color: #ef6c00;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 15px 0;
+        }
+        .btn-spin:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .question-card {
+            display: none;
+            background-color: #f6f6f6;
+            border-left: 6px solid #003865;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 15px;
+        }
+        .options-list li {
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .options-list li:hover {
+            background-color: #e8f0f8;
+        }
+        .feedback {
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .score-board {
+            font-size: 18px;
+            font-weight: bold;
+            color: #003865;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="ruleta-container">
+    <div class="header-game">
+        <h2 style="margin:0;">🦴 La Ruleta de la Osteoporosis</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px;">Gira la ruleta y pon a prueba tus conocimientos sobre fisiopatología y ejercicio</p>
+    </div>
+
+    <div class="score-board">
+        Puntuación: <span id="score">0</span> pts
+    </div>
+
+    <div class="wheel-box">
+        <div class="pointer"></div>
+        <canvas id="canvasWheel" width="320" height="320"></canvas>
+    </div>
+
+    <button id="spinBtn" class="btn-spin" onclick="spinWheel()">🎡 ¡GIRAR RULETA!</button>
+
+    <div id="questionCard" class="question-card">
+        <h3 id="categoryTitle" style="color: #003865; margin-top:0;"></h3>
+        <p id="questionText" style="font-size: 16px;"></p>
+        <ul id="optionsList" class="options-list"></ul>
+        <div id="feedback" class="feedback"></div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            category: "Fisiopatología",
+            question: "¿Qué células son las principales responsables de la resorción ósea en la osteoporosis?",
+            options: ["Osteoblastos", "Osteoclastos", "Osteocitos", "Condrocitos"],
+            correct: 1
+        },
+        {
+            category: "Diagnóstico",
+            question: "¿Qué valor de T-score en una densitometría ósea (DEXA) confirma la presencia de osteoporosis?",
+            options: ["Mayor a -1.0", "Entre -1.0 y -2.5", "Igual o inferior a -2.5", "Igual a 0.0"],
+            correct: 2
+        },
+        {
+            category: "Prescripción",
+            question: "¿Qué tipo de estímulo es más efectivo para estimular la osteogénesis y aumentar la densidad mineral ósea?",
+            options: ["Cargas estáticas de baja intensidad", "Fuerza e impactos mecánicos controlados", "Estiramientos pasivos prolongados", "Natación de larga duración"],
+            correct: 1
+        },
+        {
+            category: "Riesgos",
+            question: "¿Por qué el déficit de estrógenos en la menopausia acelera la pérdida de masa ósea?",
+            options: ["Inhibe la acción de los osteoclastos", "Aumenta la vida media de los osteoblastos", "Incrementa la actividad y vida media de los osteoclastos", "Reduce la excreción renal de calcio"],
+            correct: 2
+        },
+        {
+            category: "Precaución",
+            question: "¿Qué tipo de movimientos deben evitarse en pacientes con osteoporosis vertebral para reducir el riesgo de fracturas?",
+            options: ["Extensiones suaves de columna", "Flexiones dinámicas y rotaciones con carga de columna", "Caminatas a ritmo moderado", "Ejercicios de fuerza para miembros inferiores"],
+            correct: 1
+        },
+        {
+            category: "Biomecánica",
+            question: "¿Cuál es la localización trabecular más vulnerable a sufrir fracturas por fragilidad ósea?",
+            options: ["Diáfisis del fémur", "Fémur proximal (cuello), vértebras y radio distal", "Falanges de las manos", "Cráneo y escápula"],
+            correct: 1
+        }
+    ];
+
+    const colors = ["#003865", "#ef6c00", "#0a376d", "#ffb07a", "#1b5e20", "#d32f2f"];
+    const canvas = document.getElementById("canvasWheel");
+    const ctx = canvas.getContext("2d");
+    let currentRotation = 0;
+    let isSpinning = false;
+    let score = 0;
+
+    function drawWheel() {
+        const numSlices = questions.length;
+        const sliceAngle = (2 * Math.PI) / numSlices;
+
+        for (let i = 0; i < numSlices; i++) {
+            ctx.beginPath();
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.moveTo(160, 160);
+            ctx.arc(160, 160, 160, i * sliceAngle, (i + 1) * sliceAngle);
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(160, 160);
+            ctx.rotate(i * sliceAngle + sliceAngle / 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 13px Helvetica";
+            ctx.textAlign = "right";
+            ctx.fillText(questions[i].category, 140, 5);
+            ctx.restore();
+        }
+    }
+
+    function spinWheel() {
+        if (isSpinning) return;
+        isSpinning = true;
+        document.getElementById("spinBtn").disabled = true;
+        document.getElementById("questionCard").style.display = "none";
+        document.getElementById("feedback").innerText = "";
+
+        const randomIndex = Math.floor(Math.random() * questions.length);
+        const degreesPerSlice = 360 / questions.length;
+        const targetDegree = 360 - (randomIndex * degreesPerSlice) - (degreesPerSlice / 2);
+        const extraRotations = 5 * 360; 
+
+        currentRotation += extraRotations + targetDegree - (currentRotation % 360);
+        canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+        setTimeout(() => {
+            isSpinning = false;
+            showQuestion(randomIndex);
+        }, 4000);
+    }
+
+    function showQuestion(index) {
+        const q = questions[index];
+        document.getElementById("categoryTitle").innerText = `Categoría: ${q.category}`;
+        document.getElementById("questionText").innerText = q.question;
+        const list = document.getElementById("optionsList");
+        list.innerHTML = "";
+
+        q.options.forEach((opt, i) => {
+            const li = document.createElement("li");
+            li.innerText = opt;
+            li.onclick = () => checkAnswer(i, q.correct, li);
+            list.appendChild(li);
+        });
+
+        document.getElementById("questionCard").style.display = "block";
+    }
+
+    function checkAnswer(selected, correct, element) {
+        const listItems = document.querySelectorAll("#optionsList li");
+        listItems.forEach(li => li.onclick = null);
+
+        const feedback = document.getElementById("feedback");
+        if (selected === correct) {
+            element.style.backgroundColor = "#c8e6c9";
+            element.style.borderColor = "#388e3c";
+            feedback.innerText = "¡Correcto! +10 puntos 🎯";
+            feedback.style.color = "#2e7d32";
+            score += 10;
+            document.getElementById("score").innerText = score;
+        } else {
+            element.style.backgroundColor = "#ffcdd2";
+            element.style.borderColor = "#d32f2f";
+            listItems[correct].style.backgroundColor = "#c8e6c9";
+            feedback.innerText = "Respuesta incorrecta. ¡Sigue repasando!";
+            feedback.style.color = "#c62828";
+        }
+        
+        document.getElementById("spinBtn").disabled = false;
+    }
+
+    drawWheel();
+</script>
+
+</body>
+</html>
