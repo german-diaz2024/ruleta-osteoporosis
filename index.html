@@ -211,11 +211,15 @@
         document.getElementById("feedback").innerText = "";
 
         const randomIndex = Math.floor(Math.random() * questions.length);
-        const degreesPerSlice = 360 / questions.length;
-        const targetDegree = 360 - (randomIndex * degreesPerSlice) - (degreesPerSlice / 2);
-        const extraRotations = 5 * 360; 
+        const numSlices = questions.length;
+        const degreesPerSlice = 360 / numSlices;
 
-        currentRotation += extraRotations + targetDegree - (currentRotation % 360);
+        // Ajuste de ángulo para alineación perfecta con la flecha superior (270deg / 12 o'clock)
+        const targetSliceCenter = (randomIndex * degreesPerSlice) + (degreesPerSlice / 2);
+        const rotationNeeded = (270 - targetSliceCenter + 360) % 360;
+        const extraRotations = 5 * 360;
+
+        currentRotation += extraRotations + rotationNeeded - (currentRotation % 360);
         canvas.style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(() => {
